@@ -63,7 +63,12 @@ function start() {
 
     // Client submits a move
     socket.on('move', function(data) {
-      
+      var game = games[data.id];
+      if (game && game.move(data.id, data.square)) {
+        var save = game.save();
+        playerConnections[game.blackId].emit('game_update', save);
+        playerConnections[game.whiteId].emit('game_update', save);
+      }
     });
 
     // Cleanup

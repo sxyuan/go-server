@@ -69,3 +69,13 @@ Renderer.prototype.drawBoard = function(board) {
         }
       }
 }
+
+Renderer.prototype.getSquare = function(mouseX, mouseY) {
+  var squareDim = Math.min(this.canvas.width, this.canvas.height) / 20;
+  var squareX = mouseX / squareDim - 0.5,
+      squareY = mouseY / squareDim - 0.5;
+  if (squareX < 0 || squareX >= 19 || squareY < 0 || squareY >= 19)
+    return null;
+  else
+    return [ Math.floor(squareX), Math.floor(squareY) ];
+}

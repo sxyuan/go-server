@@ -33,11 +33,25 @@ function init() {
     renderer.draw(state);
   });
 
+  socket.on('game_update', function(data) {
+    state.board = JSON.parse(data.board);
+    state.blackTurn = data.blackTurn;
+    renderer.draw(state);
+  });
+
   canvas.onclick = function(evt) {
     if (state.id == States.LOBBY) {
       socket.emit('start_game', {
         id: playerId
       });
+    } else if (state.id == States.PLAYING && state.black == state.blackTurn) {
+      var square = renderer.getSquare(evt.pageX, evt.pageY);
+      if (square) {
+        socket.emit('move', {
+          id: playerId,
+          square: square
+        });
+      }
     }
   }
 

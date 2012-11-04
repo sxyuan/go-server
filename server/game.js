@@ -23,7 +23,8 @@ Game.prototype.move = function(playerId, square) {
           square[1] >= 0 && square[1] < 19 &&
           this.board[square[0]][square[1]] == 0) {
         this.board[square[0]][square[1]] = blackMove ? 1 : -1;
-        blackMove = !blackMove;
+        this.blackTurn = !this.blackTurn;
+        return true;
       } // Square check
     } // Turn check
   } // ID check
