@@ -7,7 +7,7 @@ var Game = function(blackId, whiteId) {
   for (var i = 0; i < 19; i++) {
     this.board[i] = [];
     for (var j = 0; j < 19; j++)
-      this.board[i][j] = -1 + Math.floor(3 * Math.random());
+      this.board[i][j] = 0;
   }
 }
 
@@ -31,7 +31,10 @@ Game.prototype.move = function(playerId, square) {
 }
 
 Game.prototype.save = function() {
-  return JSON.stringify(this.board);
+  return {
+    board: JSON.stringify(this.board),
+    blackTurn: this.blackTurn
+  };
 }
 
 exports.Game = Game;

@@ -5,6 +5,7 @@ var Renderer = function(canvas) {
   this.ctx = canvas.getContext('2d');
 };
 
+Renderer.TEXT_STYLE = 'rgb(0, 0, 0)';
 Renderer.BOARD_STYLE = 'rgb(221, 179, 92)';
 Renderer.LINE_STYLE = 'rgb(0, 0, 0)';
 
@@ -12,21 +13,28 @@ Renderer.prototype.draw = function(state) {
   this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   switch (state.id) {
     case States.CONNECTING:
+      this.ctx.fillStyle = Renderer.TEXT_STYLE;
       this.ctx.fillText('Waiting to connect...', 10, 10);
       break;
     case States.LOBBY:
+      this.ctx.fillStyle = Renderer.TEXT_STYLE;
       this.ctx.fillText('Welcome, player ' + state.playerId, 10, 10);
       this.ctx.fillText('Click anywhere to play', 10, 20);
       break;
     case States.WAITING:
+      this.ctx.fillStyle = Renderer.TEXT_STYLE;
       this.ctx.fillText('Waiting for an opponent', 10, 10);
       break;
     case States.PLAYING:
       this.drawBoard(state.board);
+      this.ctx.fillStyle = Renderer.TEXT_STYLE;
+      this.ctx.fillText(state.blackTurn == state.black ? 'Your turn' :
+          'Waiting...', 10, 10);
       break;
     case States.GAMEOVER:
       break;
     default:
+      this.ctx.fillStyle = Renderer.TEXT_STYLE;
       this.ctx.fillText('ERROR!', 10, 10);
       break;
   }
@@ -44,7 +52,7 @@ Renderer.prototype.drawBoard = function(board) {
     this.ctx.fillRect((i + 1) * squareDim, squareDim, 1, 18 * squareDim);
   }
 
-  for (var i = 0; i < 19; i++) {
+  for (var i = 0; i < 19; i++)
     for (var j = 0; j < 19; j++)
       if (board[i][j]) {
         this.ctx.fillStyle = 'rgb(0,0,0)';
@@ -60,5 +68,4 @@ Renderer.prototype.drawBoard = function(board) {
           this.ctx.fill();
         }
       }
-  }
 }

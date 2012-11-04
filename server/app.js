@@ -45,13 +45,11 @@ function start() {
           console.log('Starting game with players ' + blackId + ' and ' +
             whiteId);
           games[blackId] = games[whiteId] = new gamejs.Game(blackId, whiteId);
-          var gameSave = games[whiteId].save();
-          playerConnections[blackId].emit('game_start', {
-            game: gameSave
-          });
-          playerConnections[whiteId].emit('game_start', {
-            game: gameSave
-          });
+          var save = games[whiteId].save();
+          save.black = true;
+          playerConnections[blackId].emit('game_start', save);
+          save.black = false;
+          playerConnections[whiteId].emit('game_start', save);
           waitingId = null;
 
         // None waiting

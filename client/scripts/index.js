@@ -27,7 +27,9 @@ function init() {
 
   socket.on('game_start', function(data) {
     state.id = States.PLAYING;
-    state.board = JSON.parse(data.game);
+    state.board = JSON.parse(data.board);
+    state.blackTurn = data.blackTurn;
+    state.black = data.black;
     renderer.draw(state);
   });
 
