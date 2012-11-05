@@ -51,6 +51,13 @@ Renderer.prototype.drawBoard = function(board) {
     this.ctx.fillRect(squareDim, (i + 1) * squareDim, 18 * squareDim, 1);
     this.ctx.fillRect((i + 1) * squareDim, squareDim, 1, 18 * squareDim);
   }
+  for (var i = 0; i < 3; i++)
+    for (var j = 0; j < 3; j++) {
+      this.ctx.beginPath();
+      this.ctx.arc((4 + 6 * i) * squareDim, (4 + 6 * j) * squareDim,
+          squareDim * 0.1, 0, 2 * Math.PI);
+      this.ctx.fill();
+    }
 
   for (var i = 0; i < 19; i++)
     for (var j = 0; j < 19; j++)
