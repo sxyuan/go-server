@@ -36,6 +36,10 @@ function init() {
   socket.on('game_update', function(data) {
     state.board = JSON.parse(data.board);
     state.blackTurn = data.blackTurn;
+    state.passed = data.passed;
+    if (data.done) {
+      state.id = States.GAMEOVER;
+    }
     renderer.draw(state);
   });
 
@@ -52,6 +56,16 @@ function init() {
           square: square
         });
       }
+    }
+  }
+
+  window.onkeypress = function(evt) {
+    var c = String.fromCharCode(evt.keyCode);
+    if (c && c.toUpperCase() == "P" && state.id == States.PLAYING &&
+        state.black == state.blackTurn) {
+      socket.emit('pass', {
+        id: playerId
+      });
     }
   }
 

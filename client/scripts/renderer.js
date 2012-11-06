@@ -28,10 +28,16 @@ Renderer.prototype.draw = function(state) {
     case States.PLAYING:
       this.drawBoard(state.board);
       this.ctx.fillStyle = Renderer.TEXT_STYLE;
-      this.ctx.fillText(state.blackTurn == state.black ? 'Your turn' :
-          'Waiting...', 10, 10);
+      if (state.blackTurn == state.black) {
+        this.ctx.fillText('Your turn (press P to pass)', 10, 10);
+      } else {
+        this.ctx.fillText('Waiting...', 10, 10);
+      }
       break;
     case States.GAMEOVER:
+      this.drawBoard(state.board);
+      this.ctx.fillStyle = Renderer.TEXT_STYLE;
+      this.ctx.fillText('Game over!', 10, 10);
       break;
     default:
       this.ctx.fillStyle = Renderer.TEXT_STYLE;

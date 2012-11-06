@@ -18,6 +18,8 @@ var Game = function(blackId, whiteId) {
   }
 
   this.boardStates = {};
+  this.passed = false;
+  this.done = false;
 }
 
 Game.CARDINALS = [ [1, 0], [0, 1], [-1, 0], [0, -1] ];
@@ -28,56 +30,74 @@ for (var i = 0; i < 19; i++) {
     Game.HASH_BASE[i][j] = Math.random();
 }
 
+Game.prototype.pass = function(playerId) {
+  if (!this.done) {
+    if (playerId == this.blackId || playerId == this.whiteId) {
+      var blackMove = playerId == this.blackId;
+      if (blackMove == this.blackTurn) {
+        this.blackTurn = !this.blackTurn;
+        this.done = this.passed;
+        this.passed = true;
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 Game.prototype.move = function(playerId, square) {
-  // Check for valid ID
-  if (playerId == this.blackId || playerId == this.whiteId) {
-    // Check for turn
-    var blackMove = playerId == this.blackId;
-    if (blackMove == this.blackTurn) {
-      var player = blackMove ? 1 : -1;
+  if (!this.done) {
+    // Check for valid ID
+    if (playerId == this.blackId || playerId == this.whiteId) {
+      // Check for turn
+      var blackMove = playerId == this.blackId;
+      if (blackMove == this.blackTurn) {
+        var player = blackMove ? 1 : -1;
 
-      // Check move itself
-      if (this.inBoard(square[0], square[1]) &&
-          this.board[square[0]][square[1]] == 0) {
-        // Hypothesize move
-        this.board[square[0]][square[1]] = player;
-        var suicide = this.countLiberties(square[0], square[1], player) == 0;
+        // Check move itself
+        if (this.inBoard(square[0], square[1]) &&
+            this.board[square[0]][square[1]] == 0) {
+          // Hypothesize move
+          this.board[square[0]][square[1]] = player;
+          var suicide = this.countLiberties(square[0], square[1], player) == 0;
 
-        // Count neighbouring liberties and capture
-        for (var i = 0; i < 4; i++) {
-          var nX = square[0] + Game.CARDINALS[i][0],
-              nY = square[1] + Game.CARDINALS[i][1];
-          if (this.inBoard(nX, nY)) {
-            var liberties = this.countLiberties(nX, nY, this.board[nX][nY]);
-            if (this.board[nX][nY] != player && liberties == 0) {
-              suicide = false;
-              this.capture(nX, nY);
+          // Count neighbouring liberties and capture
+          for (var i = 0; i < 4; i++) {
+            var nX = square[0] + Game.CARDINALS[i][0],
+                nY = square[1] + Game.CARDINALS[i][1];
+            if (this.inBoard(nX, nY)) {
+              var liberties = this.countLiberties(nX, nY, this.board[nX][nY]);
+              if (this.board[nX][nY] != player && liberties == 0) {
+                suicide = false;
+                this.capture(nX, nY);
+              }
             }
           }
-        }
 
-        // Check hypothesized move
-        if (!suicide) {
-          var hash = this.hash();
-          // Ko - restore
-          if (this.boardStates[hash]) {
-            this.copyBoard(this.backupBoard, this.board);
+          // Check hypothesized move
+          if (!suicide) {
+            var hash = this.hash();
+            // Ko - restore
+            if (this.boardStates[hash]) {
+              this.copyBoard(this.backupBoard, this.board);
+              return false;
+            }
+          // Suicide - restore
+          } else {
+            this.board[square[0]][square[1]] = 0;
             return false;
           }
-        // Suicide - restore
-        } else {
-          this.board[square[0]][square[1]] = 0;
-          return false;
-        }
 
-        // Validated - finalize
-        this.copyBoard(this.board, this.backupBoard); // Inefficient
-        this.blackTurn = !this.blackTurn;
-        this.boardStates[this.hash()] = this.board;
-        return true;
-      } // Square check
-    } // Turn check
-  } // ID check
+          // Validated - finalize
+          this.copyBoard(this.board, this.backupBoard); // Inefficient
+          this.blackTurn = !this.blackTurn;
+          this.boardStates[this.hash()] = this.board;
+          this.passed = false;
+          return true;
+        } // Square check
+      } // Turn check
+    } // ID check
+  } // Done check
   return false;
 }
 
@@ -146,7 +166,9 @@ Game.prototype.inBoard = function(i, j) {
 Game.prototype.save = function() {
   return {
     board: JSON.stringify(this.board),
-    blackTurn: this.blackTurn
+    blackTurn: this.blackTurn,
+    passed: this.passed,
+    done: this.done
   };
 }
 

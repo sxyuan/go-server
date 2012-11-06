@@ -71,6 +71,16 @@ function start() {
       }
     });
 
+    // Client passes in the game
+    socket.on('pass', function(data) {
+      var game = games[data.id];
+      if (game && game.pass(data.id)) {
+        var save = game.save();
+        playerConnections[game.blackId].emit('game_update', save);
+        playerConnections[game.whiteId].emit('game_update', save);
+      }
+    });
+
     // Cleanup
     socket.on('disconnect', function(data) {
       console.log('Player ' + playerId + ' disconnected');
