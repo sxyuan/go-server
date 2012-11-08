@@ -192,9 +192,55 @@ Game.prototype.finalize = function(i, j) {
   }
 }
 
+// Flood fill
+Game.prototype.influence = function(i, j, board) {
+  if (this.inBoard(i, j) && this.board[i][j] == 0 && !board[i][j]) {
+    board[i][j] = true;
+    for (var k = 0; k < 4; k++) {
+      var nX = i + Game.CARDINALS[k][0],
+          nY = j + Game.CARDINALS[k][1];
+      this.influence(nX, nY, board);
+    }
+  }
+}
+
 Game.prototype.score = function() {
   var black = 0,
       white = 5.5;
+
+  var blackConnected = [],
+      whiteConnected = [];
+  for (var i = 0; i < Game.BOARD_SIZE; i++) {
+    blackConnected[i] = [];
+    whiteConnected[i] = [];
+    for (var j = 0; j < Game.BOARD_SIZE; j++) {
+      blackConnected[i][j] = false;
+      whiteConnected[i][j] = false;
+    }
+  }
+
+  for (var i = 0; i < Game.BOARD_SIZE; i++)
+    for (var j = 0; j < Game.BOARD_SIZE; j++)
+      for (var k = 0; k < 4; k++) {
+        var nX = i + Game.CARDINALS[k][0],
+            nY = j + Game.CARDINALS[k][1];
+        if (this.board[i][j] == 1)
+          this.influence(nX, nY, blackConnected);
+        else if (this.board[i][j] == -1)
+          this.influence(nX, nY, whiteConnected);
+      }
+
+  for (var i = 0; i < Game.BOARD_SIZE; i++)
+    for (var j = 0; j < Game.BOARD_SIZE; j++)
+      if (this.board[i][j] == 1)
+        black++;
+      else if (this.board[i][j] == -1)
+        white++;
+      else if (blackConnected[i][j] && !whiteConnected[i][j])
+        black++;
+      else if (whiteConnected[i][j] && !blackConnected[i][j])
+        white++;
+
   return [ black, white ];
 }
 
