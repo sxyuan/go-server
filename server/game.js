@@ -6,11 +6,11 @@ var Game = function(blackId, whiteId) {
   this.board = [];
   this.backupBoard = [];
   this.track = [];
-  for (var i = 0; i < 19; i++) {
+  for (var i = 0; i < Game.BOARD_SIZE; i++) {
     this.board[i] = [];
     this.backupBoard[i] = [];
     this.track[i] = [];
-    for (var j = 0; j < 19; j++) {
+    for (var j = 0; j < Game.BOARD_SIZE; j++) {
       this.board[i][j] = 0;
       this.backupBoard[i][j] = 0;
       this.track[i][j] = false;
@@ -20,14 +20,28 @@ var Game = function(blackId, whiteId) {
   this.boardStates = {};
   this.passed = false;
   this.done = false;
+  this.blackDone = false;
+  this.whiteDone = false;
 }
 
+Game.BOARD_SIZE = 9;
 Game.CARDINALS = [ [1, 0], [0, 1], [-1, 0], [0, -1] ];
 Game.HASH_BASE = [];
-for (var i = 0; i < 19; i++) {
+for (var i = 0; i < Game.BOARD_SIZE; i++) {
   Game.HASH_BASE[i] = [];
-  for (var j = 0; j < 19; j++)
+  for (var j = 0; j < Game.BOARD_SIZE; j++)
     Game.HASH_BASE[i][j] = Math.random();
+}
+
+Game.prototype.doneMarking = function(playerId) {
+  if (this.done) {
+    if (playerId == this.blackId) {
+      this.blackDone = true;
+    } else if (playerId == this.whiteId) {
+      this.whiteDone = true;
+    }
+  }
+  return this.blackDone && this.whiteDone;
 }
 
 Game.prototype.pass = function(playerId) {
@@ -69,7 +83,7 @@ Game.prototype.move = function(playerId, square) {
               var liberties = this.countLiberties(nX, nY, this.board[nX][nY]);
               if (this.board[nX][nY] != player && liberties == 0) {
                 suicide = false;
-                this.capture(nX, nY);
+                this.capture(nX, nY, this.board);
               }
             }
           }
@@ -79,7 +93,13 @@ Game.prototype.move = function(playerId, square) {
             var hash = this.hash();
             // Ko - restore
             if (this.boardStates[hash]) {
-              this.copyBoard(this.backupBoard, this.board);
+              for (var i = 0; i < 4; i++) {
+                var nX = square[0] + Game.CARDINALS[i][0],
+                    nY = square[1] + Game.CARDINALS[i][1];
+                if (this.inBoard(nX, nY))
+                  this.restore(nX, nY);
+              }
+              this.board[square[0]][square[1]] = 0;
               return false;
             }
           // Suicide - restore
@@ -89,7 +109,7 @@ Game.prototype.move = function(playerId, square) {
           }
 
           // Validated - finalize
-          this.copyBoard(this.board, this.backupBoard); // Inefficient
+          this.finalize(square[0], square[1]);
           this.blackTurn = !this.blackTurn;
           this.boardStates[this.hash()] = this.board;
           this.passed = false;
@@ -103,16 +123,10 @@ Game.prototype.move = function(playerId, square) {
 
 Game.prototype.hash = function() {
   var hash = 0;
-  for (var i = 0; i < 19; i++)
-    for (var j = 0; j < 19; j++)
+  for (var i = 0; i < Game.BOARD_SIZE; i++)
+    for (var j = 0; j < Game.BOARD_SIZE; j++)
       hash += Game.HASH_BASE[i][j] * this.board[i][j];
   return hash;
-}
-
-Game.prototype.copyBoard = function(fromBoard, toBoard) {
-  for (var i = 0; i < 19; i++)
-    for (var j = 0; j < 19; j++)
-      toBoard[i][j] = fromBoard[i][j];
 }
 
 // Recursive flood-fill type liberty count, using track
@@ -140,35 +154,87 @@ Game.prototype.countLiberties = function(i, j, player) {
 }
 
 // Recursive flood-fill type capture, using board as backtrack
-Game.prototype.capture = function(i, j) {
-  if (this.board[i][j] != 0) {
-    var p = this.board[i][j];
-    this.board[i][j] = 0;
+Game.prototype.capture = function(i, j, board) {
+  if (board[i][j] != 0) {
+    var p = board[i][j];
+    board[i][j] = 0;
     for (var k = 0; k < 4; k++) {
       var nX = i + Game.CARDINALS[k][0],
           nY = j + Game.CARDINALS[k][1];
-      if (this.inBoard(nX, nY) && this.board[nX][nY] == p)
-        this.capture(nX, nY);
+      if (this.inBoard(nX, nY) && board[nX][nY] == p)
+        this.capture(nX, nY, board);
     }
   }
 }
 
+// Opposite of capture - restores captured group from backup
+Game.prototype.restore = function(i, j) {
+  if (this.board[i][j] != this.backupBoard[i][j]) {
+    var p = this.backupBoard[i][j];
+    this.board[i][j] = this.backupBoard[i][j];
+    for (var k = 0; k < 4; k++) {
+      var nX = i + Game.CARDINALS[k][0],
+          nY = j + Game.CARDINALS[k][1];
+      if (this.inBoard(nX, nY) && this.backupBoard[nX][nY] == p)
+        this.restore(nX, nY);
+    }
+  }
+}
+
+Game.prototype.finalize = function(i, j) {
+  this.backupBoard[i][j] = this.board[i][j];
+  for (var k = 0; k < 4; k++) {
+    var nX = i + Game.CARDINALS[k][0],
+        nY = j + Game.CARDINALS[k][1];
+    if (this.inBoard(nX, nY) && this.board[nX][nY] == 0 &&
+        this.backupBoard[nX][nY] != 0)
+      this.capture(nX, nY, this.backupBoard);
+  }
+}
+
+Game.prototype.score = function() {
+  var black = 0,
+      white = 5.5;
+  return [ black, white ];
+}
+
+Game.prototype.mark = function(playerId, square) {
+  if (this.done) {
+    if (playerId == this.blackId || playerId == this.whiteId) {
+      if (this.inBoard(square[0], square[1])) {
+        if (this.board[square[0]][square[1]] != 0) {
+          this.capture(square[0], square[1], this.board);
+          return true;
+        } else if (this.backupBoard[square[0]][square[1]] != 0) {
+          this.restore(square[0], square[1]);
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 Game.prototype.clearTrack = function() {
-  for (var i = 0; i < 19; i++)
-    for (var j = 0; j < 19; j++)
+  for (var i = 0; i < Game.BOARD_SIZE; i++)
+    for (var j = 0; j < Game.BOARD_SIZE; j++)
       this.track[i][j] = false;
 }
 
 Game.prototype.inBoard = function(i, j) {
-  return i >= 0 && i < 19 && j >= 0 && j < 19;
+  return i >= 0 && i < Game.BOARD_SIZE && j >= 0 && j < Game.BOARD_SIZE;
 }
 
 Game.prototype.save = function() {
+  var score = false;
+  if (this.done && this.blackDone && this.whiteDone)
+    score = this.score();
   return {
     board: JSON.stringify(this.board),
     blackTurn: this.blackTurn,
     passed: this.passed,
-    done: this.done
+    done: this.done,
+    score: score
   };
 }
 

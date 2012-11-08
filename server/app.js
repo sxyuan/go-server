@@ -71,6 +71,28 @@ function start() {
       }
     });
 
+    // Client marks a group as dead/alive
+    socket.on('mark', function(data) {
+      var game = games[data.id];
+      if (game && game.mark(data.id, data.square)) {
+        var save = game.save();
+        playerConnections[game.blackId].emit('game_update', save);
+        playerConnections[game.whiteId].emit('game_update', save);
+      }
+    });
+
+    // Client done marking groups
+    socket.on('done', function(data) {
+      var game = games[data.id];
+      if (game && game.doneMarking(data.id)) {
+        var save = game.save();
+        playerConnections[game.blackId].emit('game_update', save);
+        playerConnections[game.whiteId].emit('game_update', save);
+        games[game.blackId] = null;
+        games[game.whiteId] = null;
+      }
+    });
+
     // Client passes in the game
     socket.on('pass', function(data) {
       var game = games[data.id];

@@ -38,7 +38,16 @@ function init() {
     state.blackTurn = data.blackTurn;
     state.passed = data.passed;
     if (data.done) {
-      state.id = States.GAMEOVER;
+      if (data.score) {
+        state.id = States.GAMEOVER;
+        state.score = data.score;
+      } else {
+        if (state.id != States.SCORING) {
+          state.id = States.SCORING;
+          state.finalBoard = JSON.parse(data.board);
+        }
+        state.doneMarking = false;
+      }
     }
     renderer.draw(state);
   });
@@ -56,16 +65,36 @@ function init() {
           square: square
         });
       }
+    } else if (state.id == States.SCORING) {
+      var square = renderer.getSquare(evt.pageX, evt.pageY);
+      if (square) {
+        socket.emit('mark', {
+          id: playerId,
+          square: square
+        });
+      }
+    } else if (state.id == States.GAMEOVER) {
+      state.id = States.LOBBY;
+      renderer.draw(state);
     }
   }
 
   window.onkeypress = function(evt) {
-    var c = String.fromCharCode(evt.keyCode);
-    if (c && c.toUpperCase() == "P" && state.id == States.PLAYING &&
-        state.black == state.blackTurn) {
-      socket.emit('pass', {
-        id: playerId
-      });
+    if (evt.keyCode) {
+      var c = String.fromCharCode(evt.keyCode);
+      if (c.toUpperCase() == "P" && state.id == States.PLAYING &&
+          state.black == state.blackTurn) {
+        socket.emit('pass', {
+          id: playerId
+        });
+      } else if (evt.keyCode == 13 && state.id == States.SCORING) {
+        state.doneMarking = true;
+        socket.emit('done', {
+          id: playerId
+        });
+        renderer.draw(state);
+      }
+      // TODO Allow reverting from scoring to playing
     }
   }
 
