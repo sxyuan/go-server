@@ -2,13 +2,14 @@ require(['scripts/socket.io.min.js',
          'scripts/renderer.js',
          'scripts/states.js']);
 
-var port = 4444;
+var domain = '192.168.1.126',
+    port = 4444;
 
 function init() {
   var canvas = document.getElementById('canvas');
   var renderer = new Renderer(canvas);
 
-  var socket = io.connect('http://localhost:' + port);
+  var socket = io.connect('http://' + domain + ':' + port);
   var state = {
     id: States.CONNECTING
   }

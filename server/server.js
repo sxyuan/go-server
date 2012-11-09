@@ -9,6 +9,8 @@ function start(port) {
     var pathname = url.parse(request.url).pathname;
     //console.log('Request for ' + pathname + ' received');
 
+    if (pathname == '/')
+      pathname = '/index.html';
     fs.readFile('./../client' + pathname, function(err, data) {
       if (err) {
         response.writeHead(500, {'Content-Type': 'text/plain'});
