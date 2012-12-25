@@ -47,8 +47,14 @@ Renderer.prototype.draw = function(state) {
     case States.GAMEOVER:
       this.drawBoard(state.board);
       this.ctx.fillStyle = Renderer.TEXT_STYLE;
-      this.ctx.fillText('Game over! Black: ' + state.score[0] +
-          ' White: ' + state.score[1], 10, 10);
+      if (state.score[0] < 0) {
+        this.ctx.fillText('Black left the game.', 10, 10);
+      } else if (state.score[1] < 0) {
+        this.ctx.fillText('White left the game.', 10, 10);
+      } else {
+        this.ctx.fillText('Game over! Black: ' + state.score[0] +
+            ' White: ' + state.score[1], 10, 10);
+      }
       break;
     default:
       this.ctx.fillStyle = Renderer.TEXT_STYLE;

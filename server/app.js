@@ -106,6 +106,14 @@ function start() {
     // Cleanup
     socket.on('disconnect', function(data) {
       console.log('Player ' + playerId + ' disconnected');
+      var game = null;
+      if (game = games[playerId]) {
+        var save = game.exitSave(playerId);
+        playerConnections[game.blackId].emit('game_update', save);
+        playerConnections[game.whiteId].emit('game_update', save);
+        games[game.blackId] = null;
+        games[game.whiteId] = null;
+      }
       delete playerConnections[playerId];
       if (waitingId == playerId)
         waitingId = null;

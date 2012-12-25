@@ -284,4 +284,15 @@ Game.prototype.save = function() {
   };
 }
 
+Game.prototype.exitSave = function(playerId) {
+  var score = playerId == this.blackId ? [ -1, 0 ] : [ 0, -1 ];
+  return {
+    board: JSON.stringify(this.board),
+    blackTurn: this.blackTurn,
+    passed: true,
+    done: true,
+    score: score
+  };
+}
+
 exports.Game = Game;
