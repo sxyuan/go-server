@@ -3,5 +3,6 @@ var States = {
   LOBBY: 1,
   WAITING: 2,
   PLAYING: 3,
-  GAMEOVER: 4
+  SCORING: 4,
+  GAMEOVER: 5
 };
